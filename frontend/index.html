@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wheel Telemetry // MPU6050</title>
+<style>
+  :root{
+    --bg: #0c0c0d;
+    --panel: #17171a;
+    --line: #2b2b30;
+    --text: #e9e9ea;
+    --dim: #8a8a90;
+    --accent: #d81e2c;      /* racing red */
+    --accent-dim: #6e1017;
+    --amber: #ffb020;
+    --ok: #2ecc71;
+    --font-mono: 'Consolas', 'SFMono-Regular', Menlo, monospace;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; height:100%; width:100%; background: var(--bg); color: var(--text); font-family: var(--font-mono); overflow:hidden; }
+  #app{ display:flex; height:100vh; width:100vw; }
+
+  #panel{
+    width: 22%; min-width: 280px; height:100%;
+    background: linear-gradient(180deg, var(--panel), #101012);
+    border-right: 1px solid var(--line);
+    padding: 18px 16px; display:flex; flex-direction:column; gap: 12px;
+  }
+  .brand{
+    font-size: 11px; letter-spacing: 3px; color: var(--dim);
+    border-bottom: 1px solid var(--line); padding-bottom: 10px;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .brand b{ color: var(--text); font-size:13px; letter-spacing:2px; }
+
+  .status-row{ display:flex; align-items:center; gap:8px; font-size:11px; letter-spacing:1px; color:var(--dim); }
+  .dot{ width:8px; height:8px; border-radius:50%; background: var(--accent-dim); flex-shrink:0; }
+  .dot.live{ background: var(--ok); box-shadow:0 0 8px rgba(46,204,113,0.6); }
+
+  select, button{
+    background: #0e0e10; color: var(--text); border: 1px solid var(--line);
+    font-family: var(--font-mono); font-size: 12px; padding: 8px 10px; letter-spacing: 1px; cursor:pointer;
+  }
+  button:hover{ border-color: var(--accent); }
+  button:disabled{ opacity:0.35; cursor:not-allowed; }
+  #connectBtn{ width:100%; background:var(--accent); border-color:var(--accent); color:#fff; font-weight:bold; }
+  #connectBtn:hover{ background:#b81724; }
+  .row-2{ display:flex; gap:8px; }
+  .row-2 > *{ flex:1; }
+
+  .section-label{ font-size:10px; letter-spacing:2px; color: var(--dim); margin-top:2px; margin-bottom:-4px; }
+
+  .readout-group{ background:#111113; border:1px solid var(--line); padding: 10px 12px; border-radius:2px; }
+  .readout-row{ display:flex; justify-content:space-between; align-items:baseline; font-size: 13px; padding: 3px 0; border-bottom: 1px dashed #232326; }
+  .readout-row:last-child{ border-bottom:none; }
+  .readout-row .k{ color: var(--dim); letter-spacing:1px; }
+  .readout-row .v{ font-variant-numeric: tabular-nums; min-width: 78px; text-align:right; color: var(--text); }
+
+  #tempBig{ font-size: 26px; text-align:center; padding: 4px 0 2px 0; color: var(--amber); }
+  #tempBar{ height:6px; background:#232326; position:relative; overflow:hidden; border:1px solid var(--line); }
+  #tempBarFill{ position:absolute; left:0; top:0; bottom:0; width:0%; background: linear-gradient(90deg, var(--accent-dim), var(--accent)); transition: width 0.3s ease; }
+
+  .angle-big{ font-size: 34px; text-align:center; color: var(--text); font-weight:bold; }
+  .angle-sub{ text-align:center; font-size:10px; color:var(--dim); letter-spacing:2px; margin-top:-6px; }
+
+  .log{ margin-top:auto; font-size:10px; color: var(--dim); line-height:1.5; max-height: 90px; overflow-y:auto; }
+  .log::-webkit-scrollbar{ width:4px; }
+  .log::-webkit-scrollbar-thumb{ background:var(--line); }
+
+  /* ============ RIGHT VIEWPORT — now a flex column: blinker bar on top, canvas below ============ */
+  #viewport{
+    flex:1; height:100%; position:relative;
+    background: radial-gradient(ellipse at 50% 40%, #2a2a2d 0%, #101012 70%);
+    display:flex; flex-direction:column;
+  }
+
+  #blinkerBar{
+    flex-shrink:0;
+    height:64px;
+    display:flex; align-items:center; justify-content:center; gap:70px;
+    background: rgba(0,0,0,0.22);
+    border-bottom: 1px solid var(--line);
+    z-index:4;
+  }
+  .blinker{
+    width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center;
+    color: #3a3a3e;
+    opacity:1;
+    transition: color 0.15s ease;
+  }
+  .blinker svg{ width:100%; height:100%; display:block; }
+  .blinker.active{
+    color: var(--ok);
+    animation: blinkFade 0.6s steps(1,end) infinite;
+  }
+  @keyframes blinkFade{
+    0%, 45%  { opacity: 1; filter: drop-shadow(0 0 6px var(--ok)); }
+    50%, 100%{ opacity: 0.15; filter: none; }
+  }
+
+  /* Headlight — steady on/off toggle, independent of the turn signals */
+  .headlight{
+    width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center;
+    color: #3a3a3e;
+    transition: color 0.15s ease, filter 0.15s ease;
+  }
+  .headlight svg{ width:100%; height:100%; display:block; }
+  .headlight.active{
+    color: var(--amber);
+    filter: drop-shadow(0 0 7px var(--amber));
+  }
+  .headlight.high-beam{
+    color: var(--ok);
+    filter: drop-shadow(0 0 7px var(--ok));
+  }
+
+  #canvasWrap{ position:relative; flex:1; min-height:0; }
+  #loadingMsg{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    font-size:12px; letter-spacing:2px; color: var(--dim); z-index:5;
+  }
+
+  .corner-label{ position:absolute; font-size:11px; letter-spacing:2px; color: var(--dim); z-index:3; }
+  .tl{ top:16px; left:22px; }
+  .tr{ top:16px; right:22px; text-align:right; }
+  .bl{ bottom:16px; left:22px; }
+  .br{ bottom:16px; right:22px; text-align:right; }
+
+  #topButtons{ position:absolute; top:16px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:3; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ================= LEFT PANEL ================= -->
+  <div id="panel">
+    <div class="brand"><b>WHEEL · TELEMETRY</b><span>MPU6050</span></div>
+
+    <div class="status-row">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">DISCONNECTED</span>
+    </div>
+
+    <button id="connectBtn">CONNECT SERIAL PORT</button>
+    <div class="row-2">
+      <select id="baudSelect">
+        <option value="9600">9600</option>
+        <option value="19200">19200</option>
+        <option value="38400">38400</option>
+        <option value="57600">57600</option>
+        <option value="115200" selected>115200</option>
+      </select>
+      <button id="disconnectBtn" disabled>DISCONNECT</button>
+    </div>
+
+    <div class="section-label">WHEEL ANGLE</div>
+    <div class="readout-group">
+      <div class="angle-big" id="angleBig">0°</div>
+      <div class="angle-sub">DRIFTLESS · ACCEL-ANCHORED</div>
+    </div>
+
+    <div class="section-label">ACCELEROMETER (g)</div>
+    <div class="readout-group">
+      <div class="readout-row"><span class="k">AX</span><span class="v" id="valAx">0.00</span></div>
+      <div class="readout-row"><span class="k">AY</span><span class="v" id="valAy">0.00</span></div>
+      <div class="readout-row"><span class="k">AZ</span><span class="v" id="valAz">0.00</span></div>
+    </div>
+
+    <div class="section-label">GYRO SPIN RATE (°/s)</div>
+    <div class="readout-group">
+      <div class="readout-row"><span class="k">GZ (SPIN)</span><span class="v" id="valGz">0.00</span></div>
+    </div>
+
+    <div class="section-label">TEMPERATURE</div>
+    <div class="readout-group">
+      <div id="tempBig">--.- <span style="font-size:14px;">°C</span></div>
+      <div id="tempBar"><div id="tempBarFill"></div></div>
+    </div>
+
+    <div class="log" id="logBox">// awaiting connection…</div>
+  </div>
+
+  <!-- ================= RIGHT VIEWPORT ================= -->
+  <div id="viewport">
+
+    <!-- Turn-signal indicators. Each toggles independently on a rising edge
+         of Left:/Right: from the MCU, and turning one on turns the other off
+         (standard dashboard behavior). Stays lit/blinking until pressed again. -->
+    <div id="blinkerBar">
+      <div class="blinker" id="blinkerLeft" title="Left signal">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L8 12L15 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 5L13 12L20 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <div class="headlight" id="headlightIcon" title="Headlight">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="9" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 8L21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M16.5 12L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M16 16L21 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="blinker" id="blinkerRight" title="Right signal">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 5L16 12L9 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 5L11 12L4 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div id="canvasWrap">
+      <div id="loadingMsg">LOADING WHEEL MODEL…</div>
+
+      <div class="corner-label tl">GT3 WHEEL · LIVE VIEW</div>
+      <div class="corner-label tr" id="fpsLabel">-- FPS</div>
+      <div class="corner-label bl" id="uptimeLabel">T+ 00:00</div>
+      <div class="corner-label br" id="axisNote">Gz = spin axis</div>
+
+      <div id="topButtons">
+        <button id="setCenterBtn">SET CENTER (STRAIGHT AHEAD)</button>
+        <button id="resetViewBtn" style="display:none;">RESET VIEW</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* ==========================================================
+   THREE.JS SCENE — real GT3 wheel STL, front-on view, studio lighting
+   ========================================================== */
+const wrap = document.getElementById('canvasWrap');
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(35, wrap.clientWidth/wrap.clientHeight, 0.1, 500);
+camera.position.set(0, 0, 260);
+camera.lookAt(0,0,0);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+renderer.outputEncoding = THREE.sRGBEncoding;
+wrap.appendChild(renderer.domElement);
+
+// Mouse-drag orbit for free inspection. This only moves the CAMERA —
+// the wheel mesh's rotation is still driven entirely by live sensor
+// data (wheelGroup.rotation.z below), so orbiting never interferes
+// with the IMU-driven spin.
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enabled = false; // FROZEN for now — re-enable later by setting this back to true
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 0, 0);
+controls.minDistance = 80;
+controls.maxDistance = 500;
+
+const DEFAULT_CAMERA_POS = new THREE.Vector3(0, 0, 260);
+const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
+
+document.getElementById('resetViewBtn').addEventListener('click', () => {
+  camera.position.copy(DEFAULT_CAMERA_POS);
+  controls.target.copy(DEFAULT_TARGET);
+  controls.update();
+  log('View reset to front-on.');
+});
+
+// Studio-style 3-point lighting for a realistic, photographed look
+scene.add(new THREE.AmbientLight(0x404040, 0.6));
+const key = new THREE.DirectionalLight(0xffffff, 1.1);
+key.position.set(120, 180, 220);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.35);
+fill.position.set(-180, 60, -100);
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffcc99, 0.5);
+rim.position.set(0, -150, -200);
+scene.add(rim);
+
+const wheelGroup = new THREE.Group();
+scene.add(wheelGroup);
+
+const loader = new THREE.STLLoader();
+loader.load('wheel.stl', (geometry) => {
+  geometry.computeBoundingBox();
+  geometry.center(); // center the mesh at the origin so it spins about its own middle
+
+  const size = new THREE.Vector3();
+  geometry.boundingBox.getSize(size);
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const targetSize = 180;
+  const scale = targetSize / maxDim;
+
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x141416,
+    roughness: 0.42,
+    metalness: 0.25,
+  });
+
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.scale.setScalar(scale);
+
+  // A wheel disc is thin along its shaft/normal direction and wide across
+  // the rim diameter — so whichever local axis has the SMALLEST bounding-box
+  // extent is almost certainly the shaft axis, regardless of how the STL
+  // happened to be exported. Auto-align that axis to face the camera (Z)
+  // instead of assuming the model already faces Z, which is what was
+  // causing the "tumbling" instead of an in-plane spin.
+  const dims = [
+    { axis: new THREE.Vector3(1,0,0), extent: size.x },
+    { axis: new THREE.Vector3(0,1,0), extent: size.y },
+    { axis: new THREE.Vector3(0,0,1), extent: size.z },
+  ];
+  dims.sort((a,b) => a.extent - b.extent);
+  const shaftAxisLocal = dims[0].axis; // thinnest dimension
+  log(`Detected shaft axis (thinnest): ${shaftAxisLocal.x ? 'X' : shaftAxisLocal.y ? 'Y' : 'Z'} ` +
+      `(extents X:${size.x.toFixed(1)} Y:${size.y.toFixed(1)} Z:${size.z.toFixed(1)})`);
+
+  const alignQuat = new THREE.Quaternion().setFromUnitVectors(shaftAxisLocal, new THREE.Vector3(0, 0, 1));
+  const alignGroup = new THREE.Group();
+  alignGroup.quaternion.copy(alignQuat);
+  alignGroup.add(mesh);
+
+  // wheelGroup only ever receives the live sensor-driven spin (rotation.z),
+  // applied AFTER the one-time alignment above — so the spin always stays
+  // purely in the image plane no matter which way the STL was exported.
+  wheelGroup.add(alignGroup);
+
+  document.getElementById('loadingMsg').style.display = 'none';
+  log('Wheel model loaded and aligned.');
+}, (xhr) => {
+  if (xhr.lengthComputable){
+    const pct = Math.round((xhr.loaded/xhr.total)*100);
+    document.getElementById('loadingMsg').textContent = `LOADING WHEEL MODEL… ${pct}%`;
+  }
+}, (err) => {
+  document.getElementById('loadingMsg').textContent = 'FAILED TO LOAD wheel.stl — check it is in the same folder as this HTML file.';
+  log('ERROR loading wheel.stl: ' + err);
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = wrap.clientWidth/wrap.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+});
+
+/* ==========================================================
+   Axis mapping — tune these if the wheel spins the wrong way,
+   or if the accelerometer angle reads from the wrong two axes.
+   Per your described remount: the face that used to face the sky
+   now faces you, so:
+     - the old "yaw" gyro axis (Gz) is now the spin-rate axis
+     - gravity now sits in the plane of the other two axes (Ax, Ay),
+       which gives an absolute, driftless wheel angle via atan2.
+   If the wheel spins backwards, flip SPIN_SIGN.
+   If "straight ahead" drifts to face the wrong way as you turn,
+   try swapping AXIS_SWAP to true.
+   ========================================================== */
+const SPIN_SIGN = 1;
+const AXIS_SWAP = false; // false: angle = atan2(Ay, Ax)   true: atan2(Ax, Ay)
+
+// Display-only mirror fix: flips which way the wheel visually turns
+// WITHOUT touching the internal accel/gyro fusion math above (that math
+// must stay internally consistent — the gyro term's sign has to agree
+// with the accelerometer term's sign, or the two fight each other and
+// the filter jitters instead of smoothly converging).
+const WHEEL_DISPLAY_SIGN = -1;
+
+// Turn-signal state and config — moved here (before animate() is first
+// called) to avoid the same "declared after first use" ReferenceError
+// we hit earlier with frameCount. A let/const can't be touched before
+// its own declaration line runs, even from inside a function defined
+// earlier in the file.
+let leftBlinkerOn = false;
+let rightBlinkerOn = false;
+
+// Direction convention — flip this to false if it turns out "turning
+// the wheel right" actually shows a NEGATIVE angle on your readout
+// instead of positive. One-line fix, no other code needs to change.
+const RIGHT_TURN_IS_POSITIVE_DEG = false;
+
+// Once a signal is on, it must first see the wheel genuinely turn past
+// this many degrees in its own direction before auto-cancel can arm.
+const GENUINE_TURN_DEG = 15;
+
+// How close back to 0° counts as "returned to straight ahead."
+const RETURN_TO_CENTER_DEG = 18;
+
+let leftHasDeviated = false;
+let rightHasDeviated = false;
+
+// The wheel must stay past GENUINE_TURN_DEG for this long before a signal
+// arms its auto-cancel. Stops a single noisy angle sample from arming it.
+const ARM_HOLD_MS = 250;
+let leftBeyondMs = 0;
+let rightBeyondMs = 0;
+
+// Gravity must have at least this much in the Ax/Ay plane for the accelerometer
+// angle to mean anything. Below it (board near-flat / tilted away) atan2 of tiny
+// noise gives random angles, so we ignore the accelerometer and use the gyro.
+const MIN_INPLANE_G = 0.35;
+
+/* ==========================================================
+   Driftless angle fusion
+   -----------------------------------------------------------
+   The accelerometer gives an ABSOLUTE angle (gravity is in-plane
+   after your remount) — if the sensor isn't moving, this value
+   literally cannot change, so the wheel cannot drift while still.
+   The gyro is blended in only to make the response fast/smooth
+   between accelerometer samples, using vector blending (not
+   angle subtraction) so there's no glitch at the -180/180 wrap.
+   ========================================================== */
+let angleVecX = 1, angleVecY = 0; // unit vector representing current angle
+let centerOffset = 0; // radians, set by "SET CENTER"
+let lastFrameTime = performance.now();
+let latest = { Ax:0, Ay:1, Az:0, Gz:0, Temp:0 };
+
+const ACCEL_WEIGHT = 0.985; // dominant — this is what guarantees zero drift
+const GYRO_WEIGHT  = 1 - ACCEL_WEIGHT;
+
+function currentAngleRad(){
+  return Math.atan2(angleVecY, angleVecX);
+}
+
+document.getElementById('setCenterBtn').addEventListener('click', () => {
+  centerOffset = currentAngleRad();
+  log('Center set — current position is now "straight ahead".');
+});
+
+function update(dt){
+  const measuredAngle = AXIS_SWAP
+    ? Math.atan2(latest.Ax, latest.Ay)
+    : Math.atan2(latest.Ay, latest.Ax);
+  const measVecX = Math.cos(measuredAngle);
+  const measVecY = Math.sin(measuredAngle);
+
+  // Predict forward with gyro, then blend toward the accel-measured
+  // vector — blending unit vectors avoids any wraparound discontinuity.
+  const prevAngle = currentAngleRad();
+  const predictedAngle = prevAngle + SPIN_SIGN * latest.Gz * (Math.PI/180) * dt;
+  const predVecX = Math.cos(predictedAngle);
+  const predVecY = Math.sin(predictedAngle);
+
+  const inPlane = Math.hypot(latest.Ax, latest.Ay);
+  const aW = (inPlane >= MIN_INPLANE_G) ? ACCEL_WEIGHT : 0;   // 0 = gyro only
+  const gW = 1 - aW;
+  angleVecX = aW * measVecX + gW * predVecX;
+  angleVecY = aW * measVecY + gW * predVecY;
+  const norm = Math.hypot(angleVecX, angleVecY) || 1;
+  angleVecX /= norm; angleVecY /= norm;
+
+  // Subtracting two atan2-bounded angles directly does NOT stay bounded
+  // (e.g. 170° - (-170°) = 340°, not the equivalent -20°). Re-wrap the
+  // difference through atan2(sin, cos) so displayAngle always stays in
+  // the proper -180..180 range, matching what "stationary = 0, right =
+  // positive, left = negative" actually requires.
+  const rawDiff = currentAngleRad() - centerOffset;
+  const wrappedDiff = Math.atan2(Math.sin(rawDiff), Math.cos(rawDiff));
+  const displayAngle = WHEEL_DISPLAY_SIGN * wrappedDiff;
+  wheelGroup.rotation.z = displayAngle;
+
+  const deg = displayAngle * 180/Math.PI;
+  document.getElementById('angleBig').textContent = deg.toFixed(0) + '°';
+
+  updateTurnSignalAutoCancel(deg, dt);
+}
+
+let frameCount = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  const dt = Math.min((now - lastFrameTime)/1000, 0.1);
+  lastFrameTime = now;
+
+  update(dt);
+  controls.update();
+  renderer.render(scene, camera);
+  frameCount++;
+}
+animate();
+
+setInterval(() => { document.getElementById('fpsLabel').textContent = frameCount + ' FPS'; frameCount = 0; }, 1000);
+
+const startTime = performance.now();
+setInterval(() => {
+  const s = Math.floor((performance.now()-startTime)/1000);
+  const mm = String(Math.floor(s/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  document.getElementById('uptimeLabel').textContent = `T+ ${mm}:${ss}`;
+}, 1000);
+
+/* ==========================================================
+   UI update from parsed telemetry
+   ========================================================== */
+function updateUI(data){
+  latest = data;
+  document.getElementById('valAx').textContent = data.Ax.toFixed(2);
+  document.getElementById('valAy').textContent = data.Ay.toFixed(2);
+  document.getElementById('valAz').textContent = data.Az.toFixed(2);
+  document.getElementById('valGz').textContent = data.Gz.toFixed(2);
+
+  document.getElementById('tempBig').innerHTML = data.Temp.toFixed(1) + ' <span style="font-size:14px;">°C</span>';
+  const pct = Math.max(0, Math.min(100, (data.Temp / 60) * 100));
+  document.getElementById('tempBarFill').style.width = pct + '%';
+}
+
+function log(msg){
+  const box = document.getElementById('logBox');
+  const line = document.createElement('div');
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+  while (box.children.length > 40) box.removeChild(box.firstChild);
+}
+
+/* ==========================================================
+   Turn signal (blinker) state
+   -----------------------------------------------------------
+   Each press toggles that side on/off (press once -> starts
+   blinking and stays lit until pressed again). Turning one side
+   on turns the other off, matching a real dashboard stalk.
+   (State/config vars declared earlier, before animate() runs.)
+   ========================================================== */
+
+function setBlinkerVisual(side, on){
+  const el = document.getElementById(side === 'left' ? 'blinkerLeft' : 'blinkerRight');
+  el.classList.toggle('active', on);
+}
+
+function toggleLeftBlinker(){
+  leftBlinkerOn = !leftBlinkerOn;
+  leftHasDeviated = false; leftBeyondMs = 0; // must turn away again before auto-cancel can arm
+  if (leftBlinkerOn && rightBlinkerOn){
+    rightBlinkerOn = false;
+    setBlinkerVisual('right', false);
+  }
+  setBlinkerVisual('left', leftBlinkerOn);
+  log(leftBlinkerOn ? 'Left signal ON' : 'Left signal OFF');
+}
+
+function toggleRightBlinker(){
+  rightBlinkerOn = !rightBlinkerOn;
+  rightHasDeviated = false; rightBeyondMs = 0;
+  if (rightBlinkerOn && leftBlinkerOn){
+    leftBlinkerOn = false;
+    setBlinkerVisual('left', false);
+  }
+  setBlinkerVisual('right', rightBlinkerOn);
+  log(rightBlinkerOn ? 'Right signal ON' : 'Right signal OFF');
+}
+
+/* Called every frame with the current signed wheel angle (same number
+ * shown in the on-screen readout). A signal cancels itself once the
+ * wheel has genuinely turned its own direction and then come back
+ * within RETURN_TO_CENTER_DEG of 0° — exactly like a real steering
+ * column's self-cancelling stalk, using the same signed convention
+ * already on screen rather than introducing a separate 0-360 scale. */
+function updateTurnSignalAutoCancel(deg, dt){
+  const rightDeg = RIGHT_TURN_IS_POSITIVE_DEG ? deg : -deg;
+
+  if (leftBlinkerOn){
+    leftBeyondMs = (rightDeg < -GENUINE_TURN_DEG) ? leftBeyondMs + dt*1000 : 0;
+    if (!leftHasDeviated && leftBeyondMs >= ARM_HOLD_MS) {
+      leftHasDeviated = true;
+      log(`Left signal armed (wheel reached ${deg.toFixed(0)}°, threshold -${GENUINE_TURN_DEG}°).`);
+    }
+    if (leftHasDeviated && Math.abs(deg) < RETURN_TO_CENTER_DEG){
+      leftBlinkerOn = false;
+      setBlinkerVisual('left', false);
+      log('Left signal auto-cancelled — wheel returned to center.');
+    }
+  }
+
+  if (rightBlinkerOn){
+    rightBeyondMs = (rightDeg > GENUINE_TURN_DEG) ? rightBeyondMs + dt*1000 : 0;
+    if (!rightHasDeviated && rightBeyondMs >= ARM_HOLD_MS) {
+      rightHasDeviated = true;
+      log(`Right signal armed (wheel reached ${deg.toFixed(0)}°, threshold +${GENUINE_TURN_DEG}°).`);
+    }
+    if (rightHasDeviated && Math.abs(deg) < RETURN_TO_CENTER_DEG){
+      rightBlinkerOn = false;
+      setBlinkerVisual('right', false);
+      log('Right signal auto-cancelled — wheel returned to center.');
+    }
+  }
+}
+
+/* Headlight — 3-state cycle, independent of the turn signals (same as
+   a real dashboard stalk): off -> low beam (yellow) -> high beam (green)
+   -> off, advancing one state per press.                                */
+let headlightState = 0; // 0 = off, 1 = low beam, 2 = high beam
+
+function toggleHeadlight(){
+  headlightState = (headlightState + 1) % 3;
+  const icon = document.getElementById('headlightIcon');
+  icon.classList.toggle('active', headlightState === 1);
+  icon.classList.toggle('high-beam', headlightState === 2);
+
+  const labels = ['Headlight OFF', 'Headlight ON (low beam)', 'Headlight ON (high beam)'];
+  log(labels[headlightState]);
+}
+
+/* ==========================================================
+   Web Serial connection + line parsing
+   Line format sent by the firmware (one per ~100 ms):
+   "Ax:.. Ay:.. Az:.. Gx:.. Gy:.. Gz:.. Temp:..C Button:0/1 Left:0/1 Right:0/1 Head:0/1 Mode:0-2"
+   (Mode is the real headlight brightness; currently not read by this page.)
+   Only Ax, Ay, Gz, and Temp drive the wheel/readouts; Gx/Gy are
+   parsed but ignored since the wheel only needs 2D rotation.
+   ========================================================== */
+let port, reader, keepReading = false;
+const LINE_RE = /Ax:(-?[\d.]+)\s+Ay:(-?[\d.]+)\s+Az:(-?[\d.]+)\s+Gx:(-?[\d.]+)\s+Gy:(-?[\d.]+)\s+Gz:(-?[\d.]+)\s+Temp:(-?[\d.]+)C(?:\s+Button:([01]))?(?:\s+Left:([01]))?(?:\s+Right:([01]))?(?:\s+Head:([01]))?/;
+let lastButtonState = 0;
+let lastLeftState = 0;
+let lastRightState = 0;
+let lastHeadState = 0;
+
+function setStatus(connected){
+  document.getElementById('statusDot').classList.toggle('live', connected);
+  document.getElementById('statusText').textContent = connected ? 'LIVE' : 'DISCONNECTED';
+  document.getElementById('connectBtn').disabled = connected;
+  document.getElementById('disconnectBtn').disabled = !connected;
+}
+
+async function connectSerial(){
+  if (!('serial' in navigator)){
+    log('ERROR: Web Serial not supported. Use Chrome or Edge.');
+    alert('Web Serial API is not available in this browser.\nPlease open this page in Chrome or Edge.');
+    return;
+  }
+  try{
+    port = await navigator.serial.requestPort();
+    const baud = parseInt(document.getElementById('baudSelect').value, 10);
+    await port.open({ baudRate: baud });
+    setStatus(true);
+    log(`Connected @ ${baud} baud`);
+    keepReading = true;
+    readLoop();
+  } catch(err){
+    log('Connection cancelled or failed: ' + err.message);
+  }
+}
+
+async function readLoop(){
+  const textDecoder = new TextDecoderStream();
+  port.readable.pipeTo(textDecoder.writable);
+  reader = textDecoder.readable.getReader();
+  let buffer = '';
+
+  try{
+    while (keepReading){
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += value;
+      let idx;
+      while ((idx = buffer.indexOf('\n')) >= 0){
+        const line = buffer.slice(0, idx).trim();
+        buffer = buffer.slice(idx+1);
+        if (!line) continue;
+
+        const m = line.match(LINE_RE);
+        if (m){
+          updateUI({
+            Ax: parseFloat(m[1]), Ay: parseFloat(m[2]), Az: parseFloat(m[3]),
+            Gz: parseFloat(m[6]), Temp: parseFloat(m[7])
+          });
+
+          if (m[8] !== undefined){
+            const currentButtonState = parseInt(m[8], 10);
+            if (currentButtonState === 1 && lastButtonState === 0){
+              // Reset button (PA3 on the board) -> re-zero the wheel angle
+              // AND reset the camera framing together.
+              document.getElementById('setCenterBtn').click();
+              document.getElementById('resetViewBtn').click();
+            }
+            lastButtonState = currentButtonState;
+          }
+
+          if (m[9] !== undefined){
+            const currentLeftState = parseInt(m[9], 10);
+            if (currentLeftState === 1 && lastLeftState === 0){
+              toggleLeftBlinker();
+            }
+            lastLeftState = currentLeftState;
+          }
+
+          if (m[10] !== undefined){
+            const currentRightState = parseInt(m[10], 10);
+            if (currentRightState === 1 && lastRightState === 0){
+              toggleRightBlinker();
+            }
+            lastRightState = currentRightState;
+          }
+
+          if (m[11] !== undefined){
+            const currentHeadState = parseInt(m[11], 10);
+            if (currentHeadState === 1 && lastHeadState === 0){
+              toggleHeadlight();
+            }
+            lastHeadState = currentHeadState;
+          }
+        }
+      }
+    }
+  } catch(err){
+    log('Read error: ' + err.message);
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function disconnectSerial(){
+  keepReading = false;
+  try{
+    if (reader) await reader.cancel();
+    if (port) await port.close();
+  } catch(err){ /* ignore */ }
+  setStatus(false);
+  log('Disconnected.');
+}
+
+document.getElementById('connectBtn').addEventListener('click', connectSerial);
+document.getElementById('disconnectBtn').addEventListener('click', disconnectSerial);
+
+log('Ready. Click CONNECT SERIAL PORT and select your Nucleo COM port.');
+</script>
+</body>
+</html>
