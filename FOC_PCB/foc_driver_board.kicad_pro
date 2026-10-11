@@ -700,7 +700,7 @@
       "version": 1
     },
     "net_format_name": "",
-    "page_layout_descr_file": "",
+    "page_layout_descr_file": "mcu_setup",
     "plot_directory": "",
     "reuse_designators": true,
     "space_save_all_events": true,
@@ -717,15 +717,24 @@
         "filename": "foc_driver_board.kicad_sch",
         "name": "foc_driver_board",
         "uuid": "f8209e7d-519d-4843-a57e-ddd015bee8f3"
+      },
+      {
+        "filename": "untitled.kicad_sch",
+        "name": "mcu",
+        "uuid": "5d604ef7-0d88-4fb4-b373-bc0f69efe430"
       }
     ],
-    "used_designators": "D2-3,R3-6,Q1,U1,U6,#FLG1-5,#PWR13-14,#PWR16,#PWR25-26,#PWR33-35,#PWR51-56,J6",
+    "used_designators": "X1,SW1-2,C2,C8-14,C20-25,D2-3,R2-9,Q1,U1,U5-6,#FLG1-6,FB1,#PWR6,#PWR10,#PWR12-14,#PWR16,#PWR20,#PWR23-30,#PWR33-36,#PWR51-61,J6",
     "variants": []
   },
   "sheets": [
     [
       "f8209e7d-519d-4843-a57e-ddd015bee8f3",
       "foc_driver_board"
+    ],
+    [
+      "5d604ef7-0d88-4fb4-b373-bc0f69efe430",
+      "mcu"
     ]
   ],
   "text_variables": {},
