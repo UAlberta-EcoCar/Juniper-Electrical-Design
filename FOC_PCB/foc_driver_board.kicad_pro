@@ -564,6 +564,62 @@
         "via_diameter": 0.6,
         "via_drill": 0.3,
         "wire_width": 6
+      },
+      {
+        "name": "3V3",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 6,
+        "schematic_color": "rgb(255, 0, 0)",
+        "tuning_profile": ""
+      },
+      {
+        "name": "5V",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 5,
+        "schematic_color": "rgb(221, 133, 0)",
+        "tuning_profile": ""
+      },
+      {
+        "name": "CAN",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 2,
+        "schematic_color": "rgb(0, 0, 194)",
+        "tuning_profile": ""
+      },
+      {
+        "name": "GND",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 7,
+        "schematic_color": "rgb(72, 72, 72)",
+        "tuning_profile": ""
+      },
+      {
+        "name": "IMU",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 3,
+        "schematic_color": "rgb(194, 0, 194)",
+        "tuning_profile": ""
+      },
+      {
+        "name": "LCD",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 4,
+        "schematic_color": "rgb(0, 194, 0)",
+        "tuning_profile": ""
+      },
+      {
+        "name": "LED",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 0,
+        "schematic_color": "rgb(205, 198, 0)",
+        "tuning_profile": ""
+      },
+      {
+        "name": "SWD",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 1,
+        "schematic_color": "rgb(6, 184, 185)",
+        "tuning_profile": ""
       }
     ],
     "meta": {
@@ -571,7 +627,76 @@
     },
     "net_colors": null,
     "netclass_assignments": null,
-    "netclass_patterns": []
+    "netclass_patterns": [
+      {
+        "netclass": "GND",
+        "pattern": "GND*"
+      },
+      {
+        "netclass": "3V3",
+        "pattern": "+3V3"
+      },
+      {
+        "netclass": "5V",
+        "pattern": "+5V"
+      },
+      {
+        "netclass": "3V3",
+        "pattern": "+7V"
+      },
+      {
+        "netclass": "5V",
+        "pattern": "+12V"
+      },
+      {
+        "netclass": "3V3",
+        "pattern": "+3.3VA"
+      },
+      {
+        "netclass": "LCD",
+        "pattern": "LCD_*"
+      },
+      {
+        "netclass": "LCD",
+        "pattern": "SPI_*"
+      },
+      {
+        "netclass": "LCD",
+        "pattern": "T_*"
+      },
+      {
+        "netclass": "IMU",
+        "pattern": "IMU_*"
+      },
+      {
+        "netclass": "CAN",
+        "pattern": "*CAN_*"
+      },
+      {
+        "netclass": "SWD",
+        "pattern": "SW*"
+      },
+      {
+        "netclass": "SWD",
+        "pattern": "NRST"
+      },
+      {
+        "netclass": "3V3",
+        "pattern": "*3V3_LED"
+      },
+      {
+        "netclass": "5V",
+        "pattern": "*5V_LED"
+      },
+      {
+        "netclass": "LED",
+        "pattern": "LED_IN"
+      },
+      {
+        "netclass": "LED",
+        "pattern": "*DIN*"
+      }
+    ]
   },
   "pcbnew": {
     "last_paths": {
@@ -724,7 +849,7 @@
         "uuid": "5d604ef7-0d88-4fb4-b373-bc0f69efe430"
       }
     ],
-    "used_designators": "X1,SW1-2,C2,C8-14,C20-25,D2-3,R2-9,Q1,U1,U5-6,#FLG1-6,FB1,#PWR6,#PWR10,#PWR12-14,#PWR16,#PWR20,#PWR23-30,#PWR33-36,#PWR51-61,J6",
+    "used_designators": "X1,SW1-2,C2,C8-14,C20-30,D2-3,R2-9,Q1,U1,U5-6,#FLG1-6,FB1,#PWR6,#PWR10,#PWR12-14,#PWR16,#PWR20,#PWR23-30,#PWR33-36,#PWR51-64,J6-7",
     "variants": []
   },
   "sheets": [
