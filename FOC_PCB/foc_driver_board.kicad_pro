@@ -161,7 +161,7 @@
       },
       "rules": {
         "max_error": 0.005,
-        "min_clearance": 0.0,
+        "min_clearance": 0.15,
         "min_connection": 0.0,
         "min_copper_edge_clearance": 0.5,
         "min_groove_width": 0.0,
@@ -174,7 +174,7 @@
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
         "min_through_hole_diameter": 0.3,
-        "min_track_width": 0.0,
+        "min_track_width": 0.15,
         "min_via_annular_width": 0.1,
         "min_via_diameter": 0.5,
         "solder_mask_to_copper_clearance": 0.005,
@@ -567,56 +567,56 @@
       },
       {
         "name": "3V3",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "pcb_color": "rgb(255, 0, 0)",
         "priority": 6,
         "schematic_color": "rgb(255, 0, 0)",
         "tuning_profile": ""
       },
       {
         "name": "5V",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "pcb_color": "rgb(221, 133, 0)",
         "priority": 5,
         "schematic_color": "rgb(221, 133, 0)",
         "tuning_profile": ""
       },
       {
         "name": "CAN",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "pcb_color": "rgb(0, 0, 194)",
         "priority": 2,
         "schematic_color": "rgb(0, 0, 194)",
         "tuning_profile": ""
       },
       {
         "name": "GND",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "pcb_color": "rgb(132, 132, 132)",
         "priority": 7,
-        "schematic_color": "rgb(72, 72, 72)",
+        "schematic_color": "rgb(132, 132, 132)",
         "tuning_profile": ""
       },
       {
         "name": "IMU",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "pcb_color": "rgb(194, 0, 194)",
         "priority": 3,
         "schematic_color": "rgb(194, 0, 194)",
         "tuning_profile": ""
       },
       {
         "name": "LCD",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "pcb_color": "rgb(0, 194, 0)",
         "priority": 4,
         "schematic_color": "rgb(0, 194, 0)",
         "tuning_profile": ""
       },
       {
         "name": "LED",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "pcb_color": "rgb(205, 198, 0)",
         "priority": 0,
         "schematic_color": "rgb(205, 198, 0)",
         "tuning_profile": ""
       },
       {
         "name": "SWD",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "pcb_color": "rgb(6, 184, 185)",
         "priority": 1,
         "schematic_color": "rgb(6, 184, 185)",
         "tuning_profile": ""
