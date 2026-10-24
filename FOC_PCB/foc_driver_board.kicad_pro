@@ -81,16 +81,7 @@
           "width": 0.34
         }
       ],
-      "drc_exclusions": [
-        [
-          "courtyards_overlap|179270001|88020001|5a04ebc8-86ec-4c5e-a1b5-950bc284d976|fad92a00-e42f-4d91-9497-42c7b321811e",
-          ""
-        ],
-        [
-          "lib_footprint_mismatch|180420000|84020000|5a04ebc8-86ec-4c5e-a1b5-950bc284d976|00000000-0000-0000-0000-000000000000",
-          ""
-        ]
-      ],
+      "drc_exclusions": [],
       "meta": {
         "version": 2
       },
@@ -161,8 +152,8 @@
       },
       "rules": {
         "max_error": 0.005,
-        "min_clearance": 0.15,
-        "min_connection": 0.0,
+        "min_clearance": 0.14,
+        "min_connection": 0.15,
         "min_copper_edge_clearance": 0.5,
         "min_groove_width": 0.0,
         "min_hole_clearance": 0.25,
@@ -177,7 +168,7 @@
         "min_track_width": 0.15,
         "min_via_annular_width": 0.1,
         "min_via_diameter": 0.5,
-        "solder_mask_to_copper_clearance": 0.005,
+        "solder_mask_to_copper_clearance": 0.0,
         "use_height_for_length_calcs": true
       },
       "teardrop_options": [
@@ -230,7 +221,9 @@
         0.2,
         0.3,
         0.4,
-        0.5
+        0.5,
+        0.6,
+        1.0
       ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
