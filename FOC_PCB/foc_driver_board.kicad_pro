@@ -63,7 +63,7 @@
           "min_clearance": 0.5,
           "min_island_area": 10.0,
           "min_thickness": 0.25,
-          "pad_connection": 1,
+          "pad_connection": 2,
           "remove_islands": 0,
           "thermal_relief_gap": 0.5,
           "thermal_relief_spoke_width": 0.5
@@ -670,7 +670,7 @@
       },
       {
         "netclass": "CAN",
-        "pattern": "*CAN_*"
+        "pattern": "*CAN*"
       },
       {
         "netclass": "SWD",
@@ -849,7 +849,7 @@
         "uuid": "5d604ef7-0d88-4fb4-b373-bc0f69efe430"
       }
     ],
-    "used_designators": "X1,SW1-2,C2,C8-14,C20-30,D2-3,R2-9,Q1,U1,U5-6,#FLG1-6,FB1,#PWR6,#PWR10,#PWR12-14,#PWR16,#PWR20,#PWR23-30,#PWR33-36,#PWR51-64,J6-7",
+    "used_designators": "X1,SW1-2,C2,C8-14,C20-30,D2-3,R2-12,Q1,U1,U5-6,#FLG1-6,FB1,#PWR6,#PWR10,#PWR12-14,#PWR16,#PWR20,#PWR23-30,#PWR33-36,#PWR51-64,J6-7",
     "variants": []
   },
   "sheets": [
