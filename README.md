@@ -13,6 +13,14 @@ Board Requirements:
 * Powered by a 7V and 12V power supply
 * Overcurrent protection
 
+Buttons:
+* Horn button
+* Left signal button
+* Right signal button
+* Hazzard button
+* Windshield Wiper button
+* Deadman button
+
 MCU Chosen: STM32G491RET6
 
 Link: https://www.digikey.ca/en/products/detail/stmicroelectronics/STM32G491RET6/13592591
