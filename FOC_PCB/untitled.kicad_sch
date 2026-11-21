@@ -3263,6 +3263,10 @@
 		(uuid "1c364834-0184-46bb-849c-65adb3e7bcf2")
 	)
 	(no_connect
+		(at 163.83 82.55)
+		(uuid "1ef31ee6-bf86-4338-8345-fae67b3052a8")
+	)
+	(no_connect
 		(at 128.27 100.33)
 		(uuid "298f559d-8a03-469f-a14b-e9df95b21f5d")
 	)
@@ -3911,16 +3915,6 @@
 			(type default)
 		)
 		(uuid "9ff57820-dbd7-42b5-8c5f-2ff31e52e45d")
-	)
-	(wire
-		(pts
-			(xy 163.83 82.55) (xy 167.64 82.55)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a178580c-29ba-4b01-8cef-a67bcb872dd7")
 	)
 	(wire
 		(pts
@@ -4631,30 +4625,6 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
-			)
-		)
-	)
-	(global_label "LCD_BRIGHT"
-		(shape input)
-		(at 167.64 82.55 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "7b104a82-741c-4fa3-b973-fa8f5a60830b")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 181.8738 82.55 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
 			)
 		)
 	)

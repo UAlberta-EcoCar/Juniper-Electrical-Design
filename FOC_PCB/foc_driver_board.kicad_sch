@@ -7301,16 +7301,6 @@
 	)
 	(wire
 		(pts
-			(xy 215.9 80.01) (xy 217.17 80.01)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "80699955-4287-4e03-9890-d28625f183f6")
-	)
-	(wire
-		(pts
 			(xy 248.92 92.71) (xy 254 92.71)
 		)
 		(stroke
@@ -8181,6 +8171,16 @@
 	)
 	(wire
 		(pts
+			(xy 199.39 80.01) (xy 199.39 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e9e931e9-79af-4c0d-a488-e8c2a1888ffe")
+	)
+	(wire
+		(pts
 			(xy 34.29 41.91) (xy 19.05 41.91)
 		)
 		(stroke
@@ -8228,6 +8228,16 @@
 			(type default)
 		)
 		(uuid "ee674944-182b-4da5-a08f-ca21efb59f2b")
+	)
+	(wire
+		(pts
+			(xy 199.39 80.01) (xy 217.17 80.01)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ef305856-5e87-4095-8c28-c5dd823584f8")
 	)
 	(wire
 		(pts
@@ -8408,6 +8418,16 @@
 			(justify right bottom)
 		)
 		(uuid "3af4bb8f-4ca4-47a9-916a-1b35ce7a13d2")
+	)
+	(label "LCD_BRIGHT"
+		(at 199.39 80.01 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "45f7217f-eb02-48e7-9600-82e5e72de1da")
 	)
 	(label "DIN1"
 		(at 224.79 40.64 0)
@@ -8688,30 +8708,6 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
-			)
-		)
-	)
-	(global_label "LCD_BRIGHT"
-		(shape input)
-		(at 215.9 80.01 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "3e75e762-18d0-45ce-b648-912b70effd04")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 201.6662 80.01 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
 			)
 		)
 	)
@@ -11895,6 +11891,83 @@
 			(project "foc_driver_board"
 				(path "/f8209e7d-519d-4843-a57e-ddd015bee8f3"
 					(reference "C25")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3V3")
+		(at 199.39 78.74 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "4b789753-6a1d-49ac-820c-6a995e943ce1")
+		(property "Reference" "#PWR024"
+			(at 199.39 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 199.136 74.676 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 199.39 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 199.39 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 199.39 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "295370da-5272-4c09-a14b-cecec7f362ba")
+		)
+		(instances
+			(project "foc_driver_board"
+				(path "/f8209e7d-519d-4843-a57e-ddd015bee8f3"
+					(reference "#PWR024")
 					(unit 1)
 				)
 			)
